@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\Auth\AuthController;
-use App\Http\Controllers\Api\Auth\VerificationController;
-use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Auth\VerificationController;
+use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
+Route::prefix('v1')->group(function (){
 Route::prefix('auth')->group(function () {
     // Public routes
     Route::post('register', [AuthController::class, 'register']);
@@ -28,4 +29,5 @@ Route::prefix('auth')->group(function () {
         Route::post('logout-everywhere', [AuthController::class, 'logoutEverywhere']);
         Route::post('refresh-token', [AuthController::class, 'refreshToken']);
     });
+});
 });

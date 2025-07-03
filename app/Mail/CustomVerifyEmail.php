@@ -3,7 +3,6 @@
 
 namespace App\Mail;
 
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -55,9 +54,12 @@ class CustomVerifyEmail extends Mailable implements ShouldQueue
 
     protected function verificationUrl($user)
     {
+        // Fix: Cast the expire value to integer
+        $expireMinutes = (int) Config::get('auth.verification.expire', 60);
+        
         return URL::temporarySignedRoute(
             'verification.verify',
-            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
+            Carbon::now()->addMinutes($expireMinutes), // Now properly using integer
             [
                 'id' => $user->getKey(),
                 'hash' => sha1($user->getEmailForVerification()),

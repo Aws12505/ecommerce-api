@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api\Auth;
+namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\ForgotPasswordRequest;
-use App\Http\Requests\Auth\ResetPasswordRequest;
-use App\Services\Auth\AuthService;
+use App\Http\Requests\V1\Auth\ForgotPasswordRequest;
+use App\Http\Requests\V1\Auth\ResetPasswordRequest;
+use App\Services\V1\Auth\AuthService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 

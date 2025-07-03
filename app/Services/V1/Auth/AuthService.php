@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Auth;
+namespace App\Services\V1\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
@@ -27,7 +27,7 @@ class AuthService
 
         $user->assignRole('customer');
 
-        event(new Registered($user));
+        $user->sendEmailVerificationNotification();
 
         return [
             'data' => [
