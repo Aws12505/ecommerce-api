@@ -70,12 +70,12 @@ Route::prefix('v1')->group(function () {
 
             // Product Management
             Route::post('products', [ProductController::class, 'store']);
-            Route::put('products/{product}', [ProductController::class, 'update']);
+            Route::post('products/{product}', [ProductController::class, 'update']);
             Route::delete('products/{product}', [ProductController::class, 'destroy']);
 
             // Category Management
             Route::post('categories', [CategoryController::class, 'store']);
-            Route::put('categories/{category}', [CategoryController::class, 'update']);
+            Route::post('categories/{category}', [CategoryController::class, 'update']);
             Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
         });
     });

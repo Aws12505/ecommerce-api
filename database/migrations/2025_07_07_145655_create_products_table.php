@@ -29,7 +29,7 @@ return new class extends Migration
             $table->boolean('featured')->default(false);
             $table->json('attributes')->nullable();
             $table->json('meta_data')->nullable();
-            $table->timestamp('published_at')->nullable();
+            $table->date('published_at');
             $table->timestamps();
 
             $table->index(['status', 'featured']);
