@@ -142,7 +142,7 @@ public function clearCart(): array
 }
 
 
-    private function getCurrentCart(): Cart
+    public function getCurrentCart(): Cart
     {
         $user = Auth::user();
         

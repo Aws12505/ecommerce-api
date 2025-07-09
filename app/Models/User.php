@@ -11,11 +11,12 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Mail\CustomVerifyEmail;
 use App\Mail\CustomResetPassword;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Cashier\Billable; 
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasRoles;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles, Billable;
 
     /**
      * The attributes that are mass assignable.
