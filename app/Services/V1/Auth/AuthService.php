@@ -130,6 +130,11 @@ class AuthService
     {
         $user = User::findOrFail($id);
 
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            throw ValidationException::withMessages([
+                'verification' => ['Invalid verification link.']
+            ]);
+        }
 
         if ($user->hasVerifiedEmail()) {
             return [

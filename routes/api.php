@@ -41,7 +41,7 @@ Route::prefix('v1')->group(function () {
         // Email Verification
         Route::post('resend-verification', [VerificationController::class, 'resend'])->middleware('throttle:3,1');
         Route::get('verify-email/{id}/{hash}', [VerificationController::class, 'verify'])
-            ->middleware(['signed', 'throttle:6,1'])
+            ->middleware(['throttle:6,1'])
             ->name('verification.verify');
 
         // Protected Auth Routes
