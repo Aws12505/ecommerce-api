@@ -25,7 +25,7 @@ class CreateCouponRequest extends FormRequest
             'usage_limit' => 'nullable|integer|min:1',
             'usage_limit_per_user' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
-            'starts_at' => 'nullable|date|after_or_equal:now',
+            'starts_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after:starts_at',
             'applicable_products' => 'nullable|array',
             'applicable_products.*' => 'exists:products,id',
