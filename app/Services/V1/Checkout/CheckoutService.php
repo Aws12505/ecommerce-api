@@ -179,9 +179,7 @@ class CheckoutService
                 'metadata' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
-                ],
-                'customer_email' => $user->email,
-            ]
+                ]            ]
         );
 
         // Update order with Stripe session ID
