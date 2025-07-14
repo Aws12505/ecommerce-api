@@ -24,14 +24,6 @@ class CheckoutService
             ]);
         }
 
-        // Validate stock availability
-        foreach ($cart->items as $item) {
-            if (!$item->product->canPurchase($item->quantity)) {
-                throw ValidationException::withMessages([
-                    'stock' => ["Product '{$item->product->name}' is not available in requested quantity."]
-                ]);
-            }
-        }
 
         // Validate applied coupons
         if ($cart->applied_coupons) {
