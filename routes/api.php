@@ -10,6 +10,11 @@ use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\Checkout\CouponController;
 use App\Http\Controllers\Api\V1\Checkout\CheckoutController;
 use App\Http\Controllers\Api\V1\Checkout\OrderController;
+use App\Http\Controllers\Api\V1\User\UserProfileController;
+use App\Http\Controllers\Api\V1\User\FavoritesController;
+use App\Http\Controllers\Api\V1\User\UserAddressController;
+use App\Http\Controllers\Api\V1\User\NotificationSettingsController;
+use App\Http\Controllers\Api\V1\NotificationController;
 
 Route::prefix('v1')->group(function () {
 
@@ -59,7 +64,40 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('auth:sanctum')->group(function () {
+        
+        // User Profile routes
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [UserProfileController::class, 'show']);
+            Route::post('update', [UserProfileController::class, 'update']);
+            Route::post('avatar', [UserProfileController::class, 'uploadAvatar']);
+            Route::delete('avatar', [UserProfileController::class, 'deleteAvatar']);
+        });
 
+        // Favorites routes
+        Route::prefix('favorites')->group(function () {
+            Route::get('/', [FavoritesController::class, 'index']);
+            Route::post('products/{product}', [FavoritesController::class, 'store']);
+            Route::delete('products/{product}', [FavoritesController::class, 'destroy']);
+            Route::get('products/{product}/check', [FavoritesController::class, 'check']);
+        });
+
+        // User Addresses routes
+        Route::prefix('addresses')->group(function () {
+            Route::get('/', [UserAddressController::class, 'index']);
+            Route::post('/', [UserAddressController::class, 'store']);
+            Route::get('{address}', [UserAddressController::class, 'show']);
+            Route::post('{address}/update', [UserAddressController::class, 'update']);
+            Route::delete('{address}', [UserAddressController::class, 'destroy']);
+            Route::post('{address}/set-default', [UserAddressController::class, 'setDefault']);
+        });
+
+        // Notification Settings routes
+        Route::prefix('notification-settings')->group(function () {
+            Route::get('/', [NotificationSettingsController::class, 'index']);
+            Route::post('update', [NotificationSettingsController::class, 'update']);
+        });
+
+        
         // Cart Routes
         Route::get('cart', [CartController::class, 'index']);
         Route::post('cart', [CartController::class, 'store']);
@@ -77,10 +115,24 @@ Route::prefix('v1')->group(function () {
         Route::post('checkout/process', [CheckoutController::class, 'process']);
         Route::post('orders/{order}/payment-session', [CheckoutController::class, 'createPaymentSession']);
 
-        // Order Routes
-        Route::get('orders', [OrderController::class, 'index']);
-        Route::get('orders/{order}', [OrderController::class, 'show']);
-        Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+        Route::prefix('orders')->group(function () {
+            Route::get('/', [OrderController::class, 'index']);
+            Route::get('statistics', [OrderController::class, 'statistics']);
+            Route::get('{order}', [OrderController::class, 'show']);
+            Route::post('{order}/cancel', [OrderController::class, 'cancel']);
+            Route::post('{order}/reorder', [OrderController::class, 'reorder']);
+            Route::get('{order}/invoice', [OrderController::class, 'invoice']);
+        });
+
+        // Notification routes
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('unread', [NotificationController::class, 'unread']);
+            Route::post('{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::post('mark-all-read', [NotificationController::class, 'markAllAsRead']);
+            Route::delete('{id}', [NotificationController::class, 'delete']);
+            Route::delete('/', [NotificationController::class, 'deleteAll']);
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -104,6 +156,8 @@ Route::prefix('v1')->group(function () {
             Route::post('coupons', [CouponController::class, 'store']);
             Route::post('coupons/{coupon}/update', [CouponController::class, 'update']);
             Route::delete('coupons/{coupon}', [CouponController::class, 'destroy']);
+
+            Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus']);
         });
     });
 

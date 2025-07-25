@@ -12,6 +12,9 @@ use App\Mail\CustomVerifyEmail;
 use App\Mail\CustomResetPassword;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Billable; 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -37,6 +40,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verification_token',
     ];
 
     /**
@@ -67,5 +71,97 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         Mail::to($this)->send(new CustomResetPassword($this, $token));
+    }
+
+    public function notificationSettings(): HasMany
+    {
+        return $this->hasMany(NotificationSetting::class);
+    }
+
+    public function favorites(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'user_favorites')->withTimestamps();
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    // Avatar accessor
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar) {
+            return Storage::disk('public')->url($this->avatar);
+        }
+        
+        // Return default avatar or gravatar
+        return 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($this->email))) . '?d=mp&s=150';
+    }
+
+    // Notification methods
+    public function hasNotificationEnabled(string $type, string $category): bool
+    {
+        $setting = $this->notificationSettings()
+            ->where('type', $type)
+            ->where('category', $category)
+            ->first();
+
+        return $setting ? $setting->enabled : true; // Default to enabled
+    }
+
+    public function updateNotificationSetting(string $type, string $category, bool $enabled, array $preferences = []): void
+    {
+        $this->notificationSettings()->updateOrCreate(
+            ['type' => $type, 'category' => $category],
+            ['enabled' => $enabled, 'preferences' => $preferences]
+        );
+    }
+
+    // Favorites methods
+    public function addToFavorites(Product $product): bool
+    {
+        if (!$this->favorites()->where('product_id', $product->id)->exists()) {
+            $this->favorites()->attach($product->id);
+            return true;
+        }
+        return false;
+    }
+
+    public function removeFromFavorites(Product $product): bool
+    {
+        return $this->favorites()->detach($product->id) > 0;
+    }
+
+    public function isFavorite(Product $product): bool
+    {
+        return $this->favorites()->where('product_id', $product->id)->exists();
+    }
+// Address methods
+    public function getDefaultAddress(string $type = null): ?UserAddress
+    {
+        $query = $this->addresses()->where('is_default', true);
+        
+        if ($type) {
+            $query->where('type', $type);
+        }
+        
+        return $query->first();
+    }
+
+    public function setDefaultAddress(UserAddress $address): void
+    {
+        // Remove default from other addresses of the same type
+        $this->addresses()
+            ->where('type', $address->type)
+            ->where('id', '!=', $address->id)
+            ->update(['is_default' => false]);
+
+        $address->update(['is_default' => true]);
     }
 }
