@@ -144,14 +144,9 @@ class User extends Authenticatable
         return $this->favorites()->where('product_id', $product->id)->exists();
     }
 // Address methods
-    public function getDefaultAddress(string $type = null): ?UserAddress
+    public function getDefaultAddress(): ?UserAddress
     {
         $query = $this->addresses()->where('is_default', true);
-        
-        if ($type) {
-            $query->where('type', $type);
-        }
-        
         return $query->first();
     }
 
@@ -159,7 +154,6 @@ class User extends Authenticatable
     {
         // Remove default from other addresses of the same type
         $this->addresses()
-            ->where('type', $address->type)
             ->where('id', '!=', $address->id)
             ->update(['is_default' => false]);
 
