@@ -137,27 +137,26 @@ class UserProfileService
     }
 
     public function deleteAddress(UserAddress $address): array
-    {
-        $wasDefault = $address->is_default;
-        $addressType = $address->type;
-        $userId = $address->user_id;
-        
-        $address->delete();
+{
+    $wasDefault = $address->is_default;
+    $userId = $address->user_id;
 
-        // If deleted address was default, set another address as default
-        if ($wasDefault) {
-            $nextAddress = UserAddress::where('user_id', $userId)->first();
-            
-            if ($nextAddress) {
-                $nextAddress->update(['is_default' => true]);
-            }
+    $address->delete();
+
+    // If the deleted address was default, promote another one
+    if ($wasDefault) {
+        $nextAddress = UserAddress::where('user_id', $userId)->first();
+
+        if ($nextAddress) {
+            $nextAddress->update(['is_default' => true]);
         }
-
-        return [
-            'data' => null,
-            'message' => 'Address deleted successfully'
-        ];
     }
+
+    return [
+        'data' => null,
+        'message' => 'Address deleted successfully'
+    ];
+}
 
     public function setDefaultAddress(UserAddress $address): array
     {
