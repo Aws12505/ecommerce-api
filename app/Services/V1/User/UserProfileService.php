@@ -146,8 +146,7 @@ class UserProfileService
 
         // If deleted address was default, set another address as default
         if ($wasDefault) {
-            $nextAddress = UserAddress::where('user_id', $userId)
-                ->first();
+            $nextAddress = UserAddress::where('user_id', $userId)->first();
             
             if ($nextAddress) {
                 $nextAddress->update(['is_default' => true]);
