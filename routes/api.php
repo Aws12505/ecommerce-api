@@ -61,10 +61,10 @@ Route::prefix('v1')->group(function () {
             Route::post('refresh-token', [AuthController::class, 'refreshToken']);
         });
     });
-Route::get('themes', [ThemeController::class, 'index']);
+    Route::get('themes', [ThemeController::class, 'index']);
     Route::get('themes/active', [ThemeController::class, 'active']);
     Route::get('themes/{theme}', [ThemeController::class, 'show']);
-        Route::get('sliders', [SliderController::class, 'index']);
+    Route::get('active-sliders', [SliderController::class, 'index']);
 
     /*
     |--------------------------------------------------------------------------
