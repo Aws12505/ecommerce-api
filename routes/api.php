@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\User\FavoritesController;
 use App\Http\Controllers\Api\V1\User\UserAddressController;
 use App\Http\Controllers\Api\V1\User\NotificationSettingsController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\ThemeController;
 
 Route::prefix('v1')->group(function () {
 
@@ -57,7 +58,9 @@ Route::prefix('v1')->group(function () {
             Route::post('refresh-token', [AuthController::class, 'refreshToken']);
         });
     });
-
+Route::get('themes', [ThemeController::class, 'index']);
+    Route::get('themes/active', [ThemeController::class, 'active']);
+    Route::get('themes/{theme}', [ThemeController::class, 'show']);
     /*
     |--------------------------------------------------------------------------
     | Protected Routes (auth:sanctum)
@@ -158,6 +161,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('coupons/{coupon}', [CouponController::class, 'destroy']);
 
             Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus']);
+
+            Route::post('themes', [ThemeController::class, 'store']);
+            Route::put('themes/{theme}', [ThemeController::class, 'update']);
+            Route::delete('themes/{theme}', [ThemeController::class, 'destroy']);
         });
     });
 
