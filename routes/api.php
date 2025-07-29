@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\User\UserAddressController;
 use App\Http\Controllers\Api\V1\User\NotificationSettingsController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ThemeController;
+use App\Http\Controllers\Api\V1\GlobalAlertController;
 
 Route::prefix('v1')->group(function () {
 
@@ -28,6 +29,7 @@ Route::prefix('v1')->group(function () {
     Route::get('products/{slug}', [ProductController::class, 'show']);
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('categories/{slug}', [CategoryController::class, 'show']);
+    Route::get('global-alert', [GlobalAlertController::class, 'showActive']);
 
     /*
     |--------------------------------------------------------------------------
@@ -165,6 +167,13 @@ Route::get('themes', [ThemeController::class, 'index']);
             Route::post('themes', [ThemeController::class, 'store']);
             Route::put('themes/{theme}', [ThemeController::class, 'update']);
             Route::delete('themes/{theme}', [ThemeController::class, 'destroy']);
+
+            Route::prefix('global-alerts')->group(function () {
+        Route::get('/', [GlobalAlertController::class, 'index']);
+        Route::post('/', [GlobalAlertController::class, 'store']);
+        Route::put('{globalAlert}', [GlobalAlertController::class, 'update']);
+        Route::delete('{globalAlert}', [GlobalAlertController::class, 'destroy']);
+    });
         });
     });
 
