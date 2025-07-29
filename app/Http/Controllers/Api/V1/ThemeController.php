@@ -2,55 +2,44 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Theme;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\Theme\ThemeStoreRequest;
+use App\Http\Requests\V1\Theme\ThemeUpdateRequest;
+use App\Models\Theme;
+use App\Services\V1\ThemeService;
 
 class ThemeController extends Controller
 {
-    // Get all themes
+    public function __construct(protected ThemeService $service) {}
+
     public function index()
     {
-        return Theme::all();
+        return $this->service->all();
     }
-    // Get active theme (e.g. for frontend)
+
     public function active()
     {
-        return Theme::where('is_active', true)->first();
+        return $this->service->getActive();
     }
-    // Show one
+
     public function show(Theme $theme)
     {
         return $theme;
     }
-    // Admin: Create
-    public function store(Request $request)
+
+    public function store(ThemeStoreRequest $req)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:190',
-            'palette' => 'required|array',
-            'palette.light' => 'required|array',
-            'palette.dark' => 'required|array',
-        ]);
-        return Theme::create($data);
+        return $this->service->create($req->validated());
     }
-    // Admin: Update
-    public function update(Request $request, Theme $theme)
+
+    public function update(ThemeUpdateRequest $req, Theme $theme)
     {
-        $data = $request->validate([
-            'name' => 'string|max:190',
-            'palette' => 'array',
-            'palette.light' => 'array',
-            'palette.dark' => 'array',
-            'is_active' => 'boolean'
-        ]);
-        $theme->update($data);
-        return $theme->fresh();
+        return $this->service->update($theme, $req->validated());
     }
-    // Admin: Delete
+
     public function destroy(Theme $theme)
     {
-        $theme->delete();
+        $this->service->delete($theme);
         return response()->json(['success' => true]);
     }
 }

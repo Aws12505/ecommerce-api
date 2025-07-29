@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\User\NotificationSettingsController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\GlobalAlertController;
+use App\Http\Controllers\Api\V1\SliderController;
 
 Route::prefix('v1')->group(function () {
 
@@ -63,6 +64,8 @@ Route::prefix('v1')->group(function () {
 Route::get('themes', [ThemeController::class, 'index']);
     Route::get('themes/active', [ThemeController::class, 'active']);
     Route::get('themes/{theme}', [ThemeController::class, 'show']);
+        Route::get('sliders', [SliderController::class, 'index']);
+
     /*
     |--------------------------------------------------------------------------
     | Protected Routes (auth:sanctum)
@@ -173,6 +176,13 @@ Route::get('themes', [ThemeController::class, 'index']);
         Route::post('/', [GlobalAlertController::class, 'store']);
         Route::put('{globalAlert}', [GlobalAlertController::class, 'update']);
         Route::delete('{globalAlert}', [GlobalAlertController::class, 'destroy']);
+    });
+
+    Route::prefix('sliders')->group(function() {
+        Route::get('/', [SliderController::class, 'adminIndex']);
+        Route::post('/', [SliderController::class, 'store']);
+        Route::post('{slider}/update', [SliderController::class, 'update']);
+        Route::delete('{slider}', [SliderController::class, 'destroy']);
     });
         });
     });

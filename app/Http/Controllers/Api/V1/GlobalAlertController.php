@@ -3,17 +3,20 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\GlobalAlert;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\GlobalAlerts\GlobalAlertStoreRequest;
+use App\Http\Requests\V1\GlobalAlerts\GlobalAlertUpdateRequest;
+use App\Models\GlobalAlert;
+use App\Services\V1\GlobalAlertService;
+use Illuminate\Http\Request;
 
 class GlobalAlertController extends Controller
 {
-    // Public endpoint: check if alert is active
+    public function __construct(protected GlobalAlertService $service) {}
+
     public function showActive()
     {
-        $alert = GlobalAlert::active()->latest('id')->first();
-
+        $alert = $this->service->getActive();
         return response()->json([
             'show' => !!$alert,
             'alert' => $alert ? [
@@ -26,45 +29,25 @@ class GlobalAlertController extends Controller
         ]);
     }
 
-    // Admin: list all
+    // Admin methods
     public function index()
     {
-        return GlobalAlert::orderByDesc('id')->get();
+        return $this->service->listAll();
     }
 
-    // Admin: create
-    public function store(Request $request)
+    public function store(GlobalAlertStoreRequest $req)
     {
-        $data = $request->validate([
-            'type' => 'required|string|max:32',
-            'title' => 'required|string|max:255',
-            'body' => 'nullable|string',
-            'buttons' => 'nullable|array',
-            'status' => 'required|in:active,inactive',
-            'metadata' => 'nullable|array',
-        ]);
-        return GlobalAlert::create($data);
+        return $this->service->create($req->validated());
     }
 
-    // Admin: update
-    public function update(Request $request, GlobalAlert $globalAlert)
+    public function update(GlobalAlertUpdateRequest $req, GlobalAlert $globalAlert)
     {
-        $data = $request->validate([
-            'type' => 'string|max:32',
-            'title' => 'string|max:255',
-            'body' => 'nullable|string',
-            'buttons' => 'nullable|array',
-            'status' => 'in:active,inactive',
-            'metadata' => 'nullable|array',
-        ]);
-        $globalAlert->update($data);
-        return $globalAlert->fresh();
+        return $this->service->update($globalAlert, $req->validated());
     }
 
-    // Admin: delete
     public function destroy(GlobalAlert $globalAlert)
     {
-        $globalAlert->delete();
+        $this->service->delete($globalAlert);
         return response()->json(['success' => true]);
     }
 }
