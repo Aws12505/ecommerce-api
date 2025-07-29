@@ -11,7 +11,7 @@ class ThemeController extends Controller
     // Get all themes
     public function index()
     {
-        return Theme::where('is_active', true)->get();
+        return Theme::all();
     }
     // Get active theme (e.g. for frontend)
     public function active()
