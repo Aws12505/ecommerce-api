@@ -1,5 +1,5 @@
 <?php
-// app/Http/Requests/AttachProductToLineRequest.php
+// app/Http/Requests/V1/Lines/AttachProductToLineRequest.php
 
 namespace App\Http\Requests\V1\Lines;
 

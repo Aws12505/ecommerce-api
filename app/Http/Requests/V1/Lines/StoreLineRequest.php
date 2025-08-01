@@ -1,5 +1,5 @@
 <?php
-// app/Http/Requests/StoreLineRequest.php
+// app/Http/Requests/V1/Lines/StoreLineRequest.php
 
 namespace App\Http\Requests\V1\Lines;
 
@@ -9,7 +9,7 @@ class StoreLineRequest extends FormRequest
 {
     public function authorize()
     {
-        return true; // Handle in middleware
+        return true;
     }
 
     public function rules()

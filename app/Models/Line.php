@@ -50,9 +50,4 @@ class Line extends Model
         return $query->orderBy('sort_order')->orderBy('name');
     }
 
-    // Route model binding
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
 }

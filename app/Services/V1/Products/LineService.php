@@ -22,9 +22,7 @@ class LineService
 
     public function getLineBySlug(string $slug): Line
     {
-        return Line::with(['products' => function ($query) {
-            $query->where('is_active', true);
-        }])->where('slug', $slug)->firstOrFail();
+        return Line::with('products')->where('slug', $slug)->firstOrFail();
     }
 
     public function createLine(array $data): Line

@@ -1,5 +1,5 @@
 <?php
-// app/Http/Requests/UpdateLineRequest.php
+// app/Http/Requests/V1/Lines/UpdateLineRequest.php
 
 namespace App\Http\Requests\V1\Lines;
 
