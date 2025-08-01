@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\GlobalAlertController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\Legal\LegalDocumentController;
+use App\Http\Controllers\Api\V1\SplashScreenController;
 
 
 Route::prefix('v1')->group(function () {
@@ -56,6 +57,7 @@ Route::prefix('v1')->group(function () {
     Route::get('legal/privacy-policy', [LegalDocumentController::class, 'getPrivacyPolicy']);
     Route::get('legal/{type}', [LegalDocumentController::class, 'show']);
 
+    Route::get('splash-screens/active', [SplashScreenController::class, 'getActive']);
     /**
      * Authentication Routes
      */
@@ -230,6 +232,15 @@ Route::prefix('v1')->group(function () {
             Route::post('{legalDocument}/publish', [LegalDocumentController::class, 'publish']);
             Route::post('{legalDocument}/unpublish', [LegalDocumentController::class, 'unpublish']);
         });
+
+        Route::prefix('splash-screens')->group(function () {
+        Route::get('/', [SplashScreenController::class, 'index']);
+        Route::post('/', [SplashScreenController::class, 'store']);
+        Route::post('{splashScreen}', [SplashScreenController::class, 'update']);
+        Route::delete('{splashScreen}', [SplashScreenController::class, 'destroy']);
+        Route::post('{splashScreen}/activate', [SplashScreenController::class, 'activate']);
+        Route::post('{splashScreen}/deactivate', [SplashScreenController::class, 'deactivate']);
+    });
         });
     });
 
