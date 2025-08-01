@@ -1,19 +1,30 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+// Auth
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\VerificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+
+// Products & Categories
 use App\Http\Controllers\Api\V1\Products\ProductController;
 use App\Http\Controllers\Api\V1\Products\CategoryController;
+use App\Http\Controllers\Api\V1\Products\LineController;
+
+// Cart & Checkout
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\Checkout\CouponController;
 use App\Http\Controllers\Api\V1\Checkout\CheckoutController;
 use App\Http\Controllers\Api\V1\Checkout\OrderController;
+
+// User
 use App\Http\Controllers\Api\V1\User\UserProfileController;
 use App\Http\Controllers\Api\V1\User\FavoritesController;
 use App\Http\Controllers\Api\V1\User\UserAddressController;
 use App\Http\Controllers\Api\V1\User\NotificationSettingsController;
+
+// Other
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\GlobalAlertController;
@@ -21,39 +32,41 @@ use App\Http\Controllers\Api\V1\SliderController;
 
 Route::prefix('v1')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Public Product & Category Routes
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Public Routes
+     */
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{slug}', [ProductController::class, 'show']);
+
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('categories/{slug}', [CategoryController::class, 'show']);
+
+    Route::get('lines', [LineController::class, 'index']);
+    Route::get('lines/{slug}', [LineController::class, 'show']);
+
     Route::get('global-alert', [GlobalAlertController::class, 'showActive']);
+    Route::get('themes', [ThemeController::class, 'index']);
+    Route::get('themes/active', [ThemeController::class, 'active']);
+    Route::get('themes/{theme}', [ThemeController::class, 'show']);
+    Route::get('active-sliders', [SliderController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Authentication Routes (Prefix: /api/v1/auth)
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Authentication Routes
+     */
     Route::prefix('auth')->group(function () {
-
-        // Public Auth Routes
+        // Public
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
-        // Password Reset
         Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink']);
         Route::post('reset-password', [PasswordResetController::class, 'reset']);
 
-        // Email Verification
         Route::post('resend-verification', [VerificationController::class, 'resend'])->middleware('throttle:3,1');
         Route::get('verify-email/{id}/{hash}', [VerificationController::class, 'verify'])
-            ->middleware(['throttle:6,1'])
+            ->middleware('throttle:6,1')
             ->name('verification.verify');
 
-        // Protected Auth Routes
+        // Protected
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('me', [AuthController::class, 'me']);
             Route::post('logout', [AuthController::class, 'logout']);
@@ -61,19 +74,15 @@ Route::prefix('v1')->group(function () {
             Route::post('refresh-token', [AuthController::class, 'refreshToken']);
         });
     });
-    Route::get('themes', [ThemeController::class, 'index']);
-    Route::get('themes/active', [ThemeController::class, 'active']);
-    Route::get('themes/{theme}', [ThemeController::class, 'show']);
-    Route::get('active-sliders', [SliderController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Protected Routes (auth:sanctum)
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Protected Routes
+     */
     Route::middleware('auth:sanctum')->group(function () {
-        
-        // User Profile routes
+
+        /**
+         * User Profile
+         */
         Route::prefix('profile')->group(function () {
             Route::get('/', [UserProfileController::class, 'show']);
             Route::post('update', [UserProfileController::class, 'update']);
@@ -81,7 +90,9 @@ Route::prefix('v1')->group(function () {
             Route::delete('avatar', [UserProfileController::class, 'deleteAvatar']);
         });
 
-        // Favorites routes
+        /**
+         * Favorites
+         */
         Route::prefix('favorites')->group(function () {
             Route::get('/', [FavoritesController::class, 'index']);
             Route::post('products/{product}', [FavoritesController::class, 'store']);
@@ -89,7 +100,9 @@ Route::prefix('v1')->group(function () {
             Route::get('products/{product}/check', [FavoritesController::class, 'check']);
         });
 
-        // User Addresses routes
+        /**
+         * User Addresses
+         */
         Route::prefix('addresses')->group(function () {
             Route::get('/', [UserAddressController::class, 'index']);
             Route::post('/', [UserAddressController::class, 'store']);
@@ -99,26 +112,33 @@ Route::prefix('v1')->group(function () {
             Route::post('{address}/set-default', [UserAddressController::class, 'setDefault']);
         });
 
-        // Notification Settings routes
+        /**
+         * Notification Settings
+         */
         Route::prefix('notification-settings')->group(function () {
             Route::get('/', [NotificationSettingsController::class, 'index']);
             Route::post('update', [NotificationSettingsController::class, 'update']);
         });
 
-        
-        // Cart Routes
+        /**
+         * Cart
+         */
         Route::get('cart', [CartController::class, 'index']);
         Route::post('cart', [CartController::class, 'store']);
         Route::put('cart/items/{cartItemId}', [CartController::class, 'update']);
         Route::delete('cart/items/{cartItemId}', [CartController::class, 'destroy']);
         Route::delete('cart/clear', [CartController::class, 'clear']);
 
-        // Coupon Routes
+        /**
+         * Coupons
+         */
         Route::post('coupons/apply', [CouponController::class, 'apply']);
         Route::post('coupons/remove', [CouponController::class, 'remove']);
         Route::get('coupons/{code}', [CouponController::class, 'show']);
 
-        // Checkout Routes
+        /**
+         * Checkout & Orders
+         */
         Route::post('checkout/validate', [CheckoutController::class, 'validate']);
         Route::post('checkout/process', [CheckoutController::class, 'process']);
         Route::post('orders/{order}/payment-session', [CheckoutController::class, 'createPaymentSession']);
@@ -132,7 +152,9 @@ Route::prefix('v1')->group(function () {
             Route::get('{order}/invoice', [OrderController::class, 'invoice']);
         });
 
-        // Notification routes
+        /**
+         * Notifications
+         */
         Route::prefix('notifications')->group(function () {
             Route::get('/', [NotificationController::class, 'index']);
             Route::get('unread', [NotificationController::class, 'unread']);
@@ -142,55 +164,62 @@ Route::prefix('v1')->group(function () {
             Route::delete('/', [NotificationController::class, 'deleteAll']);
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Admin Routes (Requires role:admin)
-        |--------------------------------------------------------------------------
-        */
+        /**
+         * Admin Routes
+         */
         Route::middleware('role:admin')->group(function () {
 
-            // Product Management
+            // Products
             Route::post('products', [ProductController::class, 'store']);
             Route::post('products/{product}', [ProductController::class, 'update']);
             Route::delete('products/{product}', [ProductController::class, 'destroy']);
 
-            // Category Management
+            // Categories
             Route::post('categories', [CategoryController::class, 'store']);
             Route::post('categories/{category}', [CategoryController::class, 'update']);
             Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
 
-            // Coupon Management
+            // Coupons
             Route::get('coupons', [CouponController::class, 'index']);
             Route::post('coupons', [CouponController::class, 'store']);
             Route::post('coupons/{coupon}/update', [CouponController::class, 'update']);
             Route::delete('coupons/{coupon}', [CouponController::class, 'destroy']);
 
+            // Orders
             Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus']);
 
+            // Themes
             Route::post('themes', [ThemeController::class, 'store']);
             Route::put('themes/{theme}', [ThemeController::class, 'update']);
             Route::delete('themes/{theme}', [ThemeController::class, 'destroy']);
 
+            // Global Alerts
             Route::prefix('global-alerts')->group(function () {
-        Route::get('/', [GlobalAlertController::class, 'index']);
-        Route::post('/', [GlobalAlertController::class, 'store']);
-        Route::put('{globalAlert}', [GlobalAlertController::class, 'update']);
-        Route::delete('{globalAlert}', [GlobalAlertController::class, 'destroy']);
-    });
+                Route::get('/', [GlobalAlertController::class, 'index']);
+                Route::post('/', [GlobalAlertController::class, 'store']);
+                Route::put('{globalAlert}', [GlobalAlertController::class, 'update']);
+                Route::delete('{globalAlert}', [GlobalAlertController::class, 'destroy']);
+            });
 
-    Route::prefix('sliders')->group(function() {
-        Route::get('/', [SliderController::class, 'adminIndex']);
-        Route::post('/', [SliderController::class, 'store']);
-        Route::post('{slider}/update', [SliderController::class, 'update']);
-        Route::delete('{slider}', [SliderController::class, 'destroy']);
-    });
+            // Product Lines
+            Route::post('lines', [LineController::class, 'store']);
+            Route::post('lines/{line}', [LineController::class, 'update']);
+            Route::delete('lines/{line}', [LineController::class, 'destroy']);
+            Route::post('lines/{line}/products', [LineController::class, 'attachProduct']);
+            Route::delete('lines/{line}/products/{product}', [LineController::class, 'detachProduct']);
+
+            // Sliders
+            Route::prefix('sliders')->group(function () {
+                Route::get('/', [SliderController::class, 'adminIndex']);
+                Route::post('/', [SliderController::class, 'store']);
+                Route::post('{slider}/update', [SliderController::class, 'update']);
+                Route::delete('{slider}', [SliderController::class, 'destroy']);
+            });
         });
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Stripe Webhook
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Stripe Webhook
+     */
     Route::post('webhooks/stripe', [CheckoutController::class, 'webhook']);
 });

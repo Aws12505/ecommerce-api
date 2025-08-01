@@ -194,4 +194,11 @@ class Product extends Model
             ->limit(1)
     ]);
 }
+public function lines()
+{
+    return $this->belongsToMany(Line::class, 'line_product')
+                ->withPivot('sort_order')
+                ->withTimestamps()
+                ->orderByPivot('sort_order');
+}
 }
