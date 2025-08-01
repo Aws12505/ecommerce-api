@@ -29,6 +29,8 @@ use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\GlobalAlertController;
 use App\Http\Controllers\Api\V1\SliderController;
+use App\Http\Controllers\Api\V1\Legal\LegalDocumentController;
+
 
 Route::prefix('v1')->group(function () {
 
@@ -49,6 +51,10 @@ Route::prefix('v1')->group(function () {
     Route::get('themes/active', [ThemeController::class, 'active']);
     Route::get('themes/{theme}', [ThemeController::class, 'show']);
     Route::get('active-sliders', [SliderController::class, 'index']);
+
+    Route::get('legal/terms-of-service', [LegalDocumentController::class, 'getTermsOfService']);
+    Route::get('legal/privacy-policy', [LegalDocumentController::class, 'getPrivacyPolicy']);
+    Route::get('legal/{type}', [LegalDocumentController::class, 'show']);
 
     /**
      * Authentication Routes
@@ -215,6 +221,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('{slider}/update', [SliderController::class, 'update']);
                 Route::delete('{slider}', [SliderController::class, 'destroy']);
             });
+
+            Route::prefix('legal')->group(function () {
+            Route::get('/', [LegalDocumentController::class, 'index']);
+            Route::post('/', [LegalDocumentController::class, 'store']);
+            Route::post('{legalDocument}', [LegalDocumentController::class, 'update']);
+            Route::delete('{legalDocument}', [LegalDocumentController::class, 'destroy']);
+            Route::post('{legalDocument}/publish', [LegalDocumentController::class, 'publish']);
+            Route::post('{legalDocument}/unpublish', [LegalDocumentController::class, 'unpublish']);
+        });
         });
     });
 
