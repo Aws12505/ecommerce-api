@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\V1\GlobalAlertController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\Legal\LegalDocumentController;
 use App\Http\Controllers\Api\V1\SplashScreenController;
+use App\Http\Controllers\Api\V1\Currency\CurrencyController;
 
 
 Route::prefix('v1')->group(function () {
@@ -58,6 +59,9 @@ Route::prefix('v1')->group(function () {
     Route::get('legal/{type}', [LegalDocumentController::class, 'show']);
 
     Route::get('splash-screens/active', [SplashScreenController::class, 'getActive']);
+
+    Route::get('currencies', [CurrencyController::class, 'index']);
+    Route::get('currencies/{code}', [CurrencyController::class, 'show']);
     /**
      * Authentication Routes
      */
@@ -232,6 +236,15 @@ Route::prefix('v1')->group(function () {
             Route::post('{legalDocument}/publish', [LegalDocumentController::class, 'publish']);
             Route::post('{legalDocument}/unpublish', [LegalDocumentController::class, 'unpublish']);
         });
+
+        Route::prefix('currencies')->group(function () {
+        Route::post('/', [CurrencyController::class, 'store']);
+        Route::post('{currency}', [CurrencyController::class, 'update']);
+        Route::delete('{currency}', [CurrencyController::class, 'destroy']);
+        Route::post('{currency}/activate', [CurrencyController::class, 'activate']);
+        Route::post('{currency}/deactivate', [CurrencyController::class, 'deactivate']);
+        Route::post('rates/update', [CurrencyController::class, 'updateRates']);
+    });
 
         Route::prefix('splash-screens')->group(function () {
         Route::get('/', [SplashScreenController::class, 'index']);

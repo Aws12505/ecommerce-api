@@ -1,26 +1,32 @@
 <?php
-// FILE: app/Services/V1/OrderService.php
+// app/Services/V1/Orders/OrderService.php
 
-namespace App\Services\V1\Checkout;
+namespace App\Services\V1\Orders;
 
 use App\Models\Order;
 use App\Models\User;
-use App\Notifications\OrderStatusUpdated;
+use App\Services\V1\CartService;
+use App\Services\V1\Currency\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use App\Services\V1\CartService;
 
 class OrderService
 {
+    protected CurrencyService $currencyService;
+
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+
     public function getUserOrders(Request $request): array
     {
         $user = Auth::user();
         
-        $query = Order::with(['items.product', 'user'])
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc');
+        $query = Order::where('user_id', $user->id)
+                     ->orderBy('created_at', 'desc');
 
         // Filter by status
         if ($request->has('status')) {
@@ -49,6 +55,11 @@ class OrderService
         $perPage = min($request->get('per_page', 15), 50);
         $orders = $query->paginate($perPage);
 
+        // Convert orders to current user currency if needed
+        $orders->getCollection()->transform(function ($order) {
+            return $this->convertOrderPricesForDisplay($order);
+        });
+
         return [
             'data' => $orders,
             'message' => 'Orders retrieved successfully'
@@ -65,6 +76,7 @@ class OrderService
         }
 
         $order->load(['items.product', 'user', 'couponUsage.coupon']);
+        $order = $this->convertOrderPricesForDisplay($order);
 
         return [
             'data' => $order,
@@ -101,7 +113,7 @@ class OrderService
             ]);
 
             // Send notification
-            $order->user->notify(new OrderStatusUpdated($order, $previousStatus));
+            // $order->user->notify(new OrderStatusUpdated($order, $previousStatus));
         });
 
         return [
@@ -120,7 +132,6 @@ class OrderService
 
         DB::transaction(function () use ($order, $newStatus, $additionalData) {
             $previousStatus = $order->status;
-
             $updateData = ['status' => $newStatus];
 
             // Set timestamps for specific statuses
@@ -135,11 +146,10 @@ class OrderService
 
             // Merge additional data
             $updateData = array_merge($updateData, $additionalData);
-
             $order->update($updateData);
 
             // Send notification
-            $order->user->notify(new OrderStatusUpdated($order, $previousStatus));
+            // $order->user->notify(new OrderStatusUpdated($order, $previousStatus));
         });
 
         return [
@@ -151,20 +161,38 @@ class OrderService
     public function getOrderStatistics(User $user = null): array
     {
         $user = $user ?? Auth::user();
-
         $query = Order::where('user_id', $user->id);
+        $userCurrency = $user->currency ?? $this->currencyService->getUserCurrency();
+
+        // Get statistics and convert currency values
+        $totalSpent = $query->where('payment_status', 'paid')->get()->sum(function ($order) use ($userCurrency) {
+            // If order is in different currency, convert to user's current currency
+            if ($order->currency !== $userCurrency) {
+                return $this->currencyService->convertPrice($order->total, $order->currency, $userCurrency);
+            }
+            return $order->total;
+        });
+
+        $paidOrders = $query->where('payment_status', 'paid')->get();
+        $averageOrderValue = $paidOrders->count() > 0 ? $totalSpent / $paidOrders->count() : 0;
 
         $statistics = [
             'total_orders' => $query->count(),
             'completed_orders' => $query->where('status', 'delivered')->count(),
             'pending_orders' => $query->where('status', 'pending')->count(),
             'cancelled_orders' => $query->where('status', 'cancelled')->count(),
-            'total_spent' => $query->where('payment_status', 'paid')->sum('total'),
-            'average_order_value' => $query->where('payment_status', 'paid')->avg('total'),
+            'total_spent' => $totalSpent,
+            'total_spent_formatted' => $this->currencyService->formatPrice($totalSpent, $userCurrency),
+            'average_order_value' => $averageOrderValue,
+            'average_order_value_formatted' => $this->currencyService->formatPrice($averageOrderValue, $userCurrency),
+            'currency' => $userCurrency,
             'recent_orders' => $query->with(['items.product'])
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get(),
+                                  ->orderBy('created_at', 'desc')
+                                  ->limit(5)
+                                  ->get()
+                                  ->map(function ($order) {
+                                      return $this->convertOrderPricesForDisplay($order);
+                                  }),
         ];
 
         return [
@@ -182,7 +210,7 @@ class OrderService
             ]);
         }
 
-        $cartService = new CartService();
+        $cartService = new CartService($this->currencyService);
         $cart = $cartService->getCurrentCart();
 
         DB::transaction(function () use ($order, $cart) {
@@ -209,6 +237,8 @@ class OrderService
             ]);
         }
 
+        $order = $this->convertOrderPricesForDisplay($order);
+
         $invoice = [
             'order' => $order->load(['items.product', 'user']),
             'invoice_number' => 'INV-' . $order->order_number,
@@ -226,5 +256,43 @@ class OrderService
             'data' => $invoice,
             'message' => 'Invoice retrieved successfully'
         ];
+    }
+
+    protected function convertOrderPricesForDisplay(Order $order): Order
+    {
+        $currentUserCurrency = $this->currencyService->getUserCurrency();
+        
+        // If order currency matches current user currency, no conversion needed
+        if ($order->currency === $currentUserCurrency) {
+            $order->subtotal_formatted = $this->currencyService->formatPrice($order->subtotal, $order->currency);
+            $order->tax_amount_formatted = $this->currencyService->formatPrice($order->tax_amount, $order->currency);
+            $order->shipping_amount_formatted = $this->currencyService->formatPrice($order->shipping_amount, $order->currency);
+            $order->discount_amount_formatted = $this->currencyService->formatPrice($order->discount_amount, $order->currency);
+            $order->total_formatted = $this->currencyService->formatPrice($order->total, $order->currency);
+            
+            return $order;
+        }
+
+        // Convert order amounts to current user currency for display
+        $order->subtotal_converted = $this->currencyService->convertPrice($order->subtotal, $order->currency, $currentUserCurrency);
+        $order->tax_amount_converted = $this->currencyService->convertPrice($order->tax_amount, $order->currency, $currentUserCurrency);
+        $order->shipping_amount_converted = $this->currencyService->convertPrice($order->shipping_amount, $order->currency, $currentUserCurrency);
+        $order->discount_amount_converted = $this->currencyService->convertPrice($order->discount_amount, $order->currency, $currentUserCurrency);
+        $order->total_converted = $this->currencyService->convertPrice($order->total, $order->currency, $currentUserCurrency);
+
+        // Format converted prices
+        $order->subtotal_formatted = $this->currencyService->formatPrice($order->subtotal_converted, $currentUserCurrency);
+        $order->tax_amount_formatted = $this->currencyService->formatPrice($order->tax_amount_converted, $currentUserCurrency);
+        $order->shipping_amount_formatted = $this->currencyService->formatPrice($order->shipping_amount_converted, $currentUserCurrency);
+        $order->discount_amount_formatted = $this->currencyService->formatPrice($order->discount_amount_converted, $currentUserCurrency);
+        $order->total_formatted = $this->currencyService->formatPrice($order->total_converted, $currentUserCurrency);
+
+        // Keep original amounts for reference
+        $order->original_subtotal_formatted = $this->currencyService->formatPrice($order->subtotal, $order->currency);
+        $order->original_total_formatted = $this->currencyService->formatPrice($order->total, $order->currency);
+
+        $order->display_currency = $currentUserCurrency;
+        
+        return $order;
     }
 }

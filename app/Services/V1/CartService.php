@@ -8,12 +8,20 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use App\Services\V1\Currency\CurrencyService;
 
 class CartService
 {
+    protected CurrencyService $currencyService;
+
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
     public function getCart(): array
     {
         $cart = $this->getCurrentCart();
+        $cart = $this->convertCartPrices($cart);
 
         return [
             'data' => $cart->load(['items.product']),
@@ -44,6 +52,8 @@ class CartService
             $cartItem = $cart->addItem($product, $quantity, $data['options'] ?? []);
         });
 
+        $cartItem->cart = $this->convertCartPrices($cartItem->cart);
+
         return [
             'data' => [
                 'cart' => $cartItem->cart->load(['items.product']),
@@ -65,6 +75,7 @@ class CartService
         if ($newQuantity <= 0) {
             // Restore stock for entire quantity before removing
             $item->product->increaseStock($oldQuantity);
+            $cart->removeItem($cartItemId);
         } else {
             $difference = $newQuantity - $oldQuantity;
 
@@ -90,6 +101,8 @@ class CartService
         }
     });
 
+    $cart = $this->convertCartPrices($cart);
+
     return [
         'data' => $cart->load(['items.product']),
         'message' => 'Cart item updated successfully'
@@ -114,6 +127,8 @@ class CartService
             ]);
         }
     });
+
+    $cart = $this->convertCartPrices($cart);
 
     return [
         'data' => $cart->load(['items.product']),
@@ -150,5 +165,35 @@ public function clearCart(): array
             ['user_id' => $user->id],
             ['subtotal' => 0, 'tax_amount' => 0, 'total' => 0]
         );
+    }
+
+    protected function convertCartPrices(Cart $cart): Cart
+    {
+        $userCurrency = $this->currencyService->getUserCurrency();
+
+        // Convert cart totals
+        $cart->subtotal_converted = $this->currencyService->convertPrice($cart->subtotal);
+        $cart->tax_amount_converted = $this->currencyService->convertPrice($cart->tax_amount);
+        $cart->total_converted = $this->currencyService->convertPrice($cart->total);
+
+        // Format prices
+        $cart->subtotal_formatted = $this->currencyService->formatPrice($cart->subtotal_converted, $userCurrency);
+        $cart->tax_amount_formatted = $this->currencyService->formatPrice($cart->tax_amount_converted, $userCurrency);
+        $cart->total_formatted = $this->currencyService->formatPrice($cart->total_converted, $userCurrency);
+
+        // Convert applied coupon discount amounts if any
+        if ($cart->applied_coupons) {
+            $cart->applied_coupons = collect($cart->applied_coupons)->map(function ($coupon) {
+                $coupon['discount_amount_converted'] = $this->currencyService->convertPrice($coupon['discount_amount']);
+                $coupon['discount_amount_formatted'] = $this->currencyService->formatPrice($coupon['discount_amount_converted']);
+                return $coupon;
+            })->toArray();
+        }
+
+        // Add currency info
+        $cart->currency = $userCurrency;
+        $cart->original_currency = 'USD'; // or your base currency
+
+        return $cart;
     }
 }

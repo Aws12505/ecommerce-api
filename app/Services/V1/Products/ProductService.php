@@ -7,9 +7,16 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\V1\Currency\CurrencyService;
 
 class ProductService
 {
+    protected CurrencyService $currencyService;
+
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
     public function getAllProducts(Request $request): array
     {
         $query = Product::with(['categories'])
@@ -42,11 +49,21 @@ class ProductService
 
         // Price range filtering
         if ($request->has('min_price')) {
-            $query->where('price', '>=', $request->min_price);
+            $minPriceInBase = $this->currencyService->convertPrice(
+                $request->min_price, 
+                $this->currencyService->getUserCurrency(), 
+                'USD' // assuming USD is base currency
+            );
+            $query->where('price', '>=', $minPriceInBase);
         }
 
         if ($request->has('max_price')) {
-            $query->where('price', '<=', $request->max_price);
+            $maxPriceInBase = $this->currencyService->convertPrice(
+                $request->max_price, 
+                $this->currencyService->getUserCurrency(), 
+                'USD'
+            );
+            $query->where('price', '<=', $maxPriceInBase);
         }
 
         // Sorting
@@ -75,6 +92,8 @@ class ProductService
             ->active()
             ->published()
             ->firstOrFail();
+
+        $product = $this->convertProductPrices($product);
 
         return [
             'data' => $product,
@@ -151,4 +170,30 @@ class ProductService
             $product->update(['images' => $uploadedImages]);
         }
     }
+
+    protected function convertProductPrices(Product $product): Product
+    {
+        $userCurrency = $this->currencyService->getUserCurrency();
+
+        // Convert main price
+        $product->price_converted = $this->currencyService->convertPrice($product->price);
+        $product->price_formatted = $this->currencyService->formatPrice($product->price_converted, $userCurrency);
+
+        // Convert sale price if exists
+        if ($product->sale_price) {
+            $product->sale_price_converted = $this->currencyService->convertPrice($product->sale_price);
+            $product->sale_price_formatted = $this->currencyService->formatPrice($product->sale_price_converted, $userCurrency);
+        }
+
+        // Update current price (converted)
+        $product->current_price_converted = $product->sale_price_converted ?? $product->price_converted;
+        $product->current_price_formatted = $this->currencyService->formatPrice($product->current_price_converted, $userCurrency);
+
+        // Add currency info
+        $product->currency = $userCurrency;
+        $product->original_currency = 'USD'; // or your base currency
+
+        return $product;
+    }
+
 }
