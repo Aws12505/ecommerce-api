@@ -52,7 +52,7 @@ class ProductService
             $minPriceInBase = $this->currencyService->convertPrice(
                 $request->min_price, 
                 $this->currencyService->getUserCurrency(), 
-                'USD' // assuming USD is base currency
+                $this->currencyService->getBaseCurrency()
             );
             $query->where('price', '>=', $minPriceInBase);
         }
@@ -61,7 +61,7 @@ class ProductService
             $maxPriceInBase = $this->currencyService->convertPrice(
                 $request->max_price, 
                 $this->currencyService->getUserCurrency(), 
-                'USD'
+                $this->currencyService->getBaseCurrency()
             );
             $query->where('price', '<=', $maxPriceInBase);
         }
@@ -191,7 +191,7 @@ class ProductService
 
         // Add currency info
         $product->currency = $userCurrency;
-        $product->original_currency = 'USD'; // or your base currency
+        $product->original_currency = $this->currencyService->getBaseCurrency();
 
         return $product;
     }

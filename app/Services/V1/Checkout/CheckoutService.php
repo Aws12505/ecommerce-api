@@ -58,7 +58,7 @@ class CheckoutService
 
         $order = null;
         $userCurrency = $this->currencyService->getUserCurrency();
-        $exchangeRate = $this->currencyService->getExchangeRate('USD', $userCurrency); // assuming USD is base
+        $exchangeRate = $this->currencyService->getExchangeRate($this->currencyService->getBaseCurrency(), $userCurrency);
 
         DB::transaction(function () use ($cart, $checkoutData, &$order, $userCurrency, $exchangeRate) {
             // Calculate totals in base currency (stored amounts)
@@ -83,15 +83,15 @@ class CheckoutService
                 'shipping_amount' => $shippingAmount,
                 'discount_amount' => $discountAmount,
                 'total' => $total,
-                'base_currency' => 'USD' // or your base currency
+                'base_currency' => $this->currencyService->getBaseCurrency()
             ];
 
             // Convert amounts to user's currency for order display
-            $convertedSubtotal = $this->currencyService->convertPrice($subtotal, 'USD', $userCurrency);
-            $convertedTaxAmount = $this->currencyService->convertPrice($taxAmount, 'USD', $userCurrency);
-            $convertedShippingAmount = $this->currencyService->convertPrice($shippingAmount, 'USD', $userCurrency);
-            $convertedDiscountAmount = $this->currencyService->convertPrice($discountAmount, 'USD', $userCurrency);
-            $convertedTotal = $this->currencyService->convertPrice($total, 'USD', $userCurrency);
+            $convertedSubtotal = $this->currencyService->convertPrice($subtotal, $this->currencyService->getBaseCurrency(), $userCurrency);
+            $convertedTaxAmount = $this->currencyService->convertPrice($taxAmount, $this->currencyService->getBaseCurrency(), $userCurrency);
+            $convertedShippingAmount = $this->currencyService->convertPrice($shippingAmount, $this->currencyService->getBaseCurrency(), $userCurrency);
+            $convertedDiscountAmount = $this->currencyService->convertPrice($discountAmount, $this->currencyService->getBaseCurrency(), $userCurrency);
+            $convertedTotal = $this->currencyService->convertPrice($total, $this->currencyService->getBaseCurrency(), $userCurrency);
 
             // Create order with converted amounts
             $order = Order::create([
@@ -112,7 +112,7 @@ class CheckoutService
 
             // Create order items with converted prices
             foreach ($cart->items as $cartItem) {
-                $convertedPrice = $this->currencyService->convertPrice($cartItem->price, 'USD', $userCurrency);
+                $convertedPrice = $this->currencyService->convertPrice($cartItem->price,  $this->currencyService->getBaseCurrency(), $userCurrency);
                 
                 OrderItem::create([
                     'order_id' => $order->id,

@@ -192,6 +192,8 @@ class CurrencyController extends Controller
     public function setDefault(Currency $currency)
     {
         try {
+            $oldBaseCurrency = $this->currencyService->getBaseCurrency();
+            
             // Remove default status from other currencies
             Currency::where('is_default', true)->update(['is_default' => false]);
             
@@ -201,10 +203,16 @@ class CurrencyController extends Controller
                 'is_active' => true
             ]);
 
+            // Recalculate exchange rates for new base currency
+            $rateUpdates = $this->currencyService->recalculateRatesForNewBase($currency->code);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Default currency updated successfully',
-                'data' => $currency->fresh(),
+                'data' => [
+                    'currency' => $currency->fresh(),
+                    'rate_updates' => $rateUpdates,
+                ],
             ]);
 
         } catch (\Exception $e) {
@@ -219,19 +227,18 @@ class CurrencyController extends Controller
     public function updateRates()
     {
         try {
-            // This would trigger exchange rate updates from your API
             $result = $this->currencyService->updateAllExchangeRates();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Exchange rates updated successfully',
+                'message' => 'Rate update information retrieved',
                 'data' => $result,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update exchange rates',
+                'message' => 'Failed to get rate information',
                 'error' => $e->getMessage(),
             ], 500);
         }

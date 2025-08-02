@@ -114,7 +114,13 @@ class User extends Authenticatable
     // Currency methods
     public function getCurrency(): string
     {
-        return $this->currency ?? 'USD';
+        if ($this->currency) {
+            return $this->currency;
+        }
+        
+        // Get default currency from database
+        $defaultCurrency = Currency::where('is_default', true)->first();
+        return $defaultCurrency?->code ?? 'USD';
     }
 
     public function setCurrency(string $currencyCode): void

@@ -192,7 +192,7 @@ public function clearCart(): array
 
         // Add currency info
         $cart->currency = $userCurrency;
-        $cart->original_currency = 'USD'; // or your base currency
+        $cart->original_currency = $this->currencyService->getBaseCurrency(); 
 
         return $cart;
     }

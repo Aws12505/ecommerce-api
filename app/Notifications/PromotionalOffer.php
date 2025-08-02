@@ -9,16 +9,21 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
+use App\Services\V1\Currency\CurrencyService;
 
 class PromotionalOffer extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    protected CurrencyService $currencyService;
     public function __construct(
         public Coupon $coupon, 
         public string $offerTitle,
-        public string $offerDescription = ''
-    ) {}
+        public string $offerDescription = '',
+        CurrencyService $currencyService
+    ) {
+        $this->currencyService = $currencyService;
+    }
 
     public function via($notifiable): array
     {
@@ -43,7 +48,7 @@ class PromotionalOffer extends Notification implements ShouldQueue
             ->line('We have a special offer just for you!')
             ->line($this->offerDescription ?: $this->coupon->description)
             ->line('**Coupon Code: ' . $this->coupon->code . '**')
-            ->line('Discount: ' . $this->coupon->value . ($this->coupon->type === 'percentage' ? '%' : ' USD'))
+            ->line('Discount: ' . $this->coupon->value . ($this->coupon->type === 'percentage' ? '%' :  $this->currencyService->getBaseCurrency()))
             ->when($this->coupon->minimum_amount, function ($message) {
                 return $message->line('Minimum order amount: $' . number_format($this->coupon->minimum_amount, 2));
             })

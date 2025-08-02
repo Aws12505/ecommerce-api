@@ -14,13 +14,18 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Mail\WelcomeEmail; 
 use Illuminate\Support\Facades\Mail; 
+use App\Services\V1\Currency\CurrencyService;
 
 class AuthService
 {
+    protected CurrencyService $currencyService;
+
+    public function __construct(CurrencyService $currencyService) {
+        $this->currencyService = $currencyService;
+    }
     public function register(array $data): array
     {
-        // Get default currency or fallback to USD
-        $defaultCurrency = Currency::default()->first()?->code ?? 'USD';
+        $defaultCurrency = Currency::default()->first()?->code ?? $this->currencyService->getBaseCurrency();
         
         $user = User::create([
             'name' => $data['name'],

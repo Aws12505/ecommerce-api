@@ -287,7 +287,7 @@ class UserProfileService
 
         // Add currency info
         $product->currency = $userCurrency;
-        $product->original_currency = 'USD'; // or your base currency
+        $product->original_currency =  $this->currencyService->getBaseCurrency(); // or your base currency
 
         return $product;
     }
