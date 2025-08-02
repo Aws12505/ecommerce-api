@@ -31,6 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'avatar',
+        'currency',
     ];
 
     /**
@@ -57,7 +58,6 @@ class User extends Authenticatable
         ];
     }
 
-
     /**
      * Send the email verification notification.
      */
@@ -74,6 +74,7 @@ class User extends Authenticatable
         Mail::to($this)->send(new CustomResetPassword($this, $token));
     }
 
+    // Relationships
     public function notificationSettings(): HasMany
     {
         return $this->hasMany(NotificationSetting::class);
@@ -94,6 +95,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function preferredCurrency()
+    {
+        return $this->belongsTo(Currency::class, 'currency', 'code');
+    }
+
     // Avatar accessor
     public function getAvatarUrlAttribute()
     {
@@ -103,6 +109,39 @@ class User extends Authenticatable
         
         // Return default avatar or gravatar
         return 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($this->email))) . '?d=mp&s=150';
+    }
+
+    // Currency methods
+    public function getCurrency(): string
+    {
+        return $this->currency ?? 'USD';
+    }
+
+    public function setCurrency(string $currencyCode): void
+    {
+        // Validate currency exists and is active
+        $currency = Currency::where('code', strtoupper($currencyCode))->active()->first();
+        
+        if ($currency) {
+            $this->update(['currency' => strtoupper($currencyCode)]);
+        }
+    }
+
+    public function getCurrencySymbol(): string
+    {
+        $currency = $this->preferredCurrency;
+        return $currency ? $currency->symbol : '$';
+    }
+
+    public function getCurrencyDetails(): array
+    {
+        $currency = $this->preferredCurrency;
+        
+        return [
+            'code' => $this->getCurrency(),
+            'name' => $currency?->name ?? 'US Dollar',
+            'symbol' => $this->getCurrencySymbol(),
+        ];
     }
 
     // Notification methods
@@ -143,7 +182,8 @@ class User extends Authenticatable
     {
         return $this->favorites()->where('product_id', $product->id)->exists();
     }
-// Address methods
+
+    // Address methods
     public function getDefaultAddress(): ?UserAddress
     {
         $query = $this->addresses()->where('is_default', true);

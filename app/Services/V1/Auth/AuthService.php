@@ -3,6 +3,7 @@
 namespace App\Services\V1\Auth;
 
 use App\Models\User;
+use App\Models\Currency;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -18,11 +19,15 @@ class AuthService
 {
     public function register(array $data): array
     {
+        // Get default currency or fallback to USD
+        $defaultCurrency = Currency::default()->first()?->code ?? 'USD';
+        
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'email_verified_at' => null,
+            'currency' => $data['currency'] ?? $defaultCurrency,
         ]);
 
         $user->assignRole('customer');
@@ -31,7 +36,8 @@ class AuthService
 
         return [
             'data' => [
-                'user' => $user->only(['id', 'name', 'email']),
+                'user' => $user->only(['id', 'name', 'email', 'currency']),
+                'currency_details' => $user->getCurrencyDetails(),
                 'requires_verification' => true
             ],
             'message' => 'Registration successful. Please check your email for verification.'
@@ -63,12 +69,13 @@ class AuthService
         
         return [
             'data' => [
-                'user' => $user->load('roles.permissions'),
+                'user' => $user->load(['roles.permissions', 'preferredCurrency']),
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_at' => now()->addDays(30)->toISOString(),
                 'permissions' => $user->getAllPermissions()->pluck('name'),
-                'roles' => $user->getRoleNames()
+                'roles' => $user->getRoleNames(),
+                'currency_details' => $user->getCurrencyDetails(),
             ],
             'message' => 'Login successful'
         ];
@@ -95,7 +102,8 @@ class AuthService
             'data' => [
                 'token' => $token,
                 'token_type' => 'Bearer',
-                'expires_at' => now()->addDays(30)->toISOString()
+                'expires_at' => now()->addDays(30)->toISOString(),
+                'currency_details' => $user->getCurrencyDetails(),
             ],
             'message' => 'Token refreshed successfully'
         ];
@@ -148,7 +156,8 @@ class AuthService
 
         return [
             'data' => [
-                'user' => $user->only(['id', 'name', 'email', 'email_verified_at']),
+                'user' => $user->only(['id', 'name', 'email', 'email_verified_at', 'currency']),
+                'currency_details' => $user->getCurrencyDetails(),
                 'verified' => true
             ],
             'message' => 'Email verified successfully.'

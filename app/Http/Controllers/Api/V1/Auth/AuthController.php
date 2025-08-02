@@ -58,11 +58,12 @@ class AuthController extends Controller
 
     public function me(): JsonResponse
     {
-        $user = Auth::user()->load('roles.permissions');
+        $user = Auth::user()->load(['roles.permissions', 'preferredCurrency']);
         return $this->successResponse([
             'user' => $user,
             'permissions' => $user->getAllPermissions()->pluck('name'),
-            'roles' => $user->getRoleNames()
+            'roles' => $user->getRoleNames(),
+            'currency_details' => $user->getCurrencyDetails(),
         ], 'User profile retrieved successfully');
     }
 

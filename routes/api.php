@@ -84,6 +84,8 @@ Route::prefix('v1')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::post('logout-everywhere', [AuthController::class, 'logoutEverywhere']);
             Route::post('refresh-token', [AuthController::class, 'refreshToken']);
+            Route::get('profile/currency', [UserProfileController::class, 'getCurrencyPreference']);
+            Route::post('profile/currency', [UserProfileController::class, 'updateCurrency']);
         });
     });
 
