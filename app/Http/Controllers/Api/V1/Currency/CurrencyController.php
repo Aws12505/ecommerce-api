@@ -224,21 +224,46 @@ class CurrencyController extends Controller
         }
     }
 
-    public function updateRates()
+    public function recalculateRates()
     {
         try {
-            $result = $this->currencyService->updateAllExchangeRates();
+            $baseCurrency = $this->currencyService->getBaseCurrency();
+            $activeCurrencies = Currency::active()->where('code', '!=', $baseCurrency)->get();
+            
+            $recalculatedCount = 0;
+            $errors = [];
+            
+            foreach ($activeCurrencies as $currency) {
+                foreach ($activeCurrencies as $targetCurrency) {
+                    if ($currency->code !== $targetCurrency->code) {
+                        try {
+                            $rate = $this->currencyService->getExchangeRate($currency->code, $targetCurrency->code);
+                            if ($rate !== 1.0) {
+                                $recalculatedCount++;
+                            }
+                        } catch (\Exception $e) {
+                            $errors[] = "Failed to calculate rate for {$currency->code} to {$targetCurrency->code}";
+                        }
+                    }
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rate update information retrieved',
-                'data' => $result,
+                'message' => 'Exchange rates recalculated successfully',
+                'data' => [
+                    'base_currency' => $baseCurrency,
+                    'recalculated_rates' => $recalculatedCount,
+                    'errors' => $errors,
+                    'total_currencies' => $activeCurrencies->count(),
+                    'updated_at' => now()->toISOString(),
+                ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get rate information',
+                'message' => 'Failed to recalculate exchange rates',
                 'error' => $e->getMessage(),
             ], 500);
         }

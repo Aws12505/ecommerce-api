@@ -247,7 +247,7 @@ Route::prefix('v1')->group(function () {
         Route::post('{currency}/activate', [CurrencyController::class, 'activate']);
         Route::post('{currency}/deactivate', [CurrencyController::class, 'deactivate']);
         Route::post('{currency}/set-default', [CurrencyController::class, 'setDefault']);
-        Route::post('rates/update', [CurrencyController::class, 'updateRates']);
+        Route::post('rates/recalculate', [CurrencyController::class, 'recalculateRates']);
     });
 
         Route::prefix('splash-screens')->group(function () {
