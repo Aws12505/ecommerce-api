@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\Legal\LegalDocumentController;
 use App\Http\Controllers\Api\V1\SplashScreenController;
 use App\Http\Controllers\Api\V1\Currency\CurrencyController;
+use App\Http\Controllers\Api\V1\Currency\CurrencyRateController;
 
 
 Route::prefix('v1')->group(function () {
@@ -256,6 +257,13 @@ Route::prefix('v1')->group(function () {
         Route::delete('{splashScreen}', [SplashScreenController::class, 'destroy']);
         Route::post('{splashScreen}/activate', [SplashScreenController::class, 'activate']);
         Route::post('{splashScreen}/deactivate', [SplashScreenController::class, 'deactivate']);
+    });
+
+    Route::prefix('currency-rates')->group(function () {
+        Route::get('/', [CurrencyRateController::class, 'index']);
+        Route::post('/', [CurrencyRateController::class, 'store']);
+        Route::post('{rate}', [CurrencyRateController::class, 'update']);
+        Route::delete('{rate}', [CurrencyRateController::class, 'destroy']);
     });
         });
     });
