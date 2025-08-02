@@ -245,6 +245,7 @@ Route::prefix('v1')->group(function () {
         Route::delete('{currency}', [CurrencyController::class, 'destroy']);
         Route::post('{currency}/activate', [CurrencyController::class, 'activate']);
         Route::post('{currency}/deactivate', [CurrencyController::class, 'deactivate']);
+        Route::post('{currency}/set-default', [CurrencyController::class, 'setDefault']);
         Route::post('rates/update', [CurrencyController::class, 'updateRates']);
     });
 

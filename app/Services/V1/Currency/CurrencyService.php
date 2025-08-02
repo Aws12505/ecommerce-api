@@ -119,4 +119,24 @@ class CurrencyService
     {
         return Currency::active()->orderBy('code')->get();
     }
+
+    public function updateAllExchangeRates(): array
+{
+    $currencies = Currency::active()->get();
+    $baseCurrency = $this->baseCurrency;
+    $updatedRates = [];
+    
+    foreach ($currencies as $currency) {
+        if ($currency->code !== $baseCurrency) {
+            $rate = $this->fetchExchangeRateFromAPI($baseCurrency, $currency->code);
+            $updatedRates[$currency->code] = $rate;
+        }
+    }
+    
+    return [
+        'base_currency' => $baseCurrency,
+        'updated_rates' => $updatedRates,
+        'updated_at' => now()->toISOString(),
+    ];
+}
 }
