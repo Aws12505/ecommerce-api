@@ -103,6 +103,8 @@ Route::prefix('v1')->group(function () {
             Route::post('update', [UserProfileController::class, 'update']);
             Route::post('avatar', [UserProfileController::class, 'uploadAvatar']);
             Route::delete('avatar', [UserProfileController::class, 'deleteAvatar']);
+            Route::get('currency',[UserProfileController::class,'getCurrencyPreference']);
+            Route::post('currency',[UserProfileController::class,'updateCurrency']);
         });
 
         /**
