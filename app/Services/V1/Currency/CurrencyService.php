@@ -21,14 +21,17 @@ class CurrencyService
     {
         if (!$this->baseCurrency) {
             $defaultCurrency = Currency::where('is_default', true)->first();
-            $this->baseCurrency = $defaultCurrency?->code ?? 'USD';
+            $this->baseCurrency = $defaultCurrency->code ?? 'USD';
         }
         return $this->baseCurrency;
     }
 
     public function getUserCurrency(): string
     {
-        return Auth::user()?->currency ?? $this->getBaseCurrency();
+        if(Auth::user()&&!is_null(Auth::user()->currency)){
+            return Auth::user()->currency;
+        }
+        return $this->getBaseCurrency();
     }
 
     public function convertPrice(float $price, string $fromCurrency = null, string $toCurrency = null): float
