@@ -174,14 +174,13 @@ class ProductService
     protected function convertProductPrices(Product $product): Product
     {
         $userCurrency = $this->currencyService->getUserCurrency();
-
         // Convert main price
-        $product->price_converted = $this->currencyService->convertPrice($product->price);
+        $product->price_converted = $this->currencyService->convertPrice($product->price,$userCurrency);
         $product->price_formatted = $this->currencyService->formatPrice($product->price_converted, $userCurrency);
 
         // Convert sale price if exists
         if ($product->sale_price) {
-            $product->sale_price_converted = $this->currencyService->convertPrice($product->sale_price);
+            $product->sale_price_converted = $this->currencyService->convertPrice($product->sale_price,$userCurrency);
             $product->sale_price_formatted = $this->currencyService->formatPrice($product->sale_price_converted, $userCurrency);
         }
 
