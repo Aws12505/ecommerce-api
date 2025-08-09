@@ -15,7 +15,8 @@ class OptionalSanctumAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        Auth::guard('sanctum')->user(); // populates the user if possible
+        Auth::shouldUse('sanctum');
+        Auth::guard('sanctum')->user();
         return $next($request);
     }
 }
