@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function () {
     /**
      * Public Routes
      */
+    Route::middleware('optionalSanctumAuth')->group(function(){
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{slug}', [ProductController::class, 'show']);
 
@@ -63,6 +64,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('currencies', [CurrencyController::class, 'index']);
     Route::get('currencies/{code}', [CurrencyController::class, 'show']);
+    });
     /**
      * Authentication Routes
      */
